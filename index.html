@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gardner Grove Cemetery | Digital Archive</title>
+    <title>Gardner Grove Cemetery | Secure Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -13,6 +13,7 @@
             --apple-red: #ff3b30;
             --bg-dark: #000000;
             --glass: rgba(255, 255, 255, 0.85);
+            --drawer-bg: #fbfbfd;
         }
 
         body {
@@ -25,12 +26,12 @@
             overflow-x: hidden;
         }
 
-        /* --- Apple Style Navigation --- */
+        /* --- Nav --- */
         nav {
             background: rgba(22, 22, 23, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            height: 48px;
+            height: 52px;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -50,45 +51,23 @@
             padding: 0 20px;
         }
 
-        .logo { 
-            font-size: 14px; 
-            font-weight: 600; 
-            letter-spacing: 0.8px; 
-            opacity: 0.9; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-        }
+        .logo { font-size: 14px; font-weight: 600; letter-spacing: 0.5px; opacity: 0.9; display: flex; align-items: center; gap: 8px; }
         
-        .cart-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            position: relative;
-            transition: opacity 0.2s;
+        .cart-trigger {
+            background: none; border: none; color: white; cursor: pointer; position: relative;
+            font-size: 18px; transition: 0.2s;
         }
-
-        .cart-btn:hover { opacity: 0.7; }
-
+        .cart-trigger:hover { opacity: 0.7; }
         .cart-badge {
-            position: absolute;
-            top: -5px; right: -12px;
-            background: var(--apple-blue);
-            font-size: 10px;
-            min-width: 14px;
-            height: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-weight: bold;
+            position: absolute; top: -6px; right: -10px; background: var(--apple-blue);
+            font-size: 10px; min-width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            border: 2px solid #1a1a1a;
         }
 
-        /* --- Map Interface Section --- */
+        /* --- Map Area --- */
         .main-container {
-            padding-top: 60px; /* Offset for fixed nav */
+            padding-top: 80px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -109,135 +88,113 @@
         .cemetery-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
         .overlay-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-        /* Initial Plot Borders Visible on Load */
+        /* Dynamic Plot Styling */
         .plot-path { 
-            fill: rgba(255,255,255,0.02); 
             stroke-width: 2.5px; 
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            fill: rgba(255,255,255,0.02);
         }
         
+        /* Available State */
         .status-available .plot-path { stroke: var(--apple-green); }
-        .status-taken .plot-path { stroke: rgba(255,255,255,0.25); fill: rgba(255,255,255,0.08); }
-
-        /* Interaction Gathers */
         .status-available:hover .plot-path { fill: rgba(52, 199, 89, 0.35); stroke: white; cursor: pointer; }
-        .status-taken:hover .plot-path { fill: rgba(255, 59, 48, 0.25); stroke: var(--apple-red); cursor: default; }
 
-        /* --- Apple Style Centered Glass Popup --- */
+        /* Taken/Sold State */
+        .status-taken .plot-path { stroke: #555; fill: rgba(255,255,255,0.1); }
+        .status-taken:hover .plot-path { stroke: var(--apple-red); fill: rgba(255, 59, 48, 0.2); cursor: not-allowed; }
+
+        /* --- Glass Popup --- */
         .info-card {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.92);
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
             width: 400px;
             background: var(--glass);
             backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border-radius: 28px;
+            border-radius: 24px;
             color: #1d1d1f;
-            display: none;
-            z-index: 4000;
-            box-shadow: 0 40px 120px rgba(0,0,0,0.7);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none; z-index: 4000;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+            opacity: 0; transition: all 0.3s ease;
             pointer-events: none;
         }
-
         .info-card.visible { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
         .info-card.locked { pointer-events: auto; }
 
-        .card-header { padding: 32px 32px 12px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .card-header h2 { margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.8px; }
+        .card-header { padding: 30px 30px 10px; display: flex; justify-content: space-between; }
+        .card-header h2 { margin: 0; font-size: 28px; font-weight: 600; }
+        .card-body { padding: 0 30px 30px; }
         
-        .card-body { padding: 0 32px 32px; }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 14px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
-        }
-        .info-label { font-size: 11px; color: #6e6e73; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-        .info-value { font-size: 16px; font-weight: 500; text-align: right; max-width: 220px; line-height: 1.4; color: #1d1d1f; }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .info-label { font-size: 11px; font-weight: 700; color: #86868b; text-transform: uppercase; }
+        .info-value { font-size: 15px; font-weight: 500; text-align: right; }
 
-        .btn-buy {
-            background: var(--apple-blue);
-            color: white;
-            border: none;
-            width: calc(100% - 64px);
-            margin: 0 32px 32px;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .btn-action {
+            width: 100%; padding: 16px; border-radius: 12px; border: none;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s;
+            margin-top: 20px;
         }
-        .btn-buy:hover { background: #0077ed; transform: scale(1.02); }
-        .btn-buy:active { transform: scale(0.98); }
+        .btn-add { background: var(--apple-blue); color: white; }
+        .btn-add:hover { transform: scale(1.02); background: #0077ed; }
 
-        /* --- Checkout Page Mockup --- */
-        #checkout {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #f5f5f7;
-            color: #1d1d1f;
-            z-index: 6000;
-            display: none;
-            padding: 100px 20px;
-            overflow-y: auto;
+        /* --- Cart Drawer (Slide Out) --- */
+        .cart-drawer {
+            position: fixed; top: 0; right: -450px; width: 400px; height: 100%;
+            background: var(--drawer-bg); color: #1d1d1f;
+            z-index: 6000; box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
         }
+        .cart-drawer.open { right: 0; }
+        
+        .drawer-header { padding: 30px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center; }
+        .drawer-body { flex: 1; padding: 30px; overflow-y: auto; }
+        .drawer-footer { padding: 30px; background: white; border-top: 1px solid #e5e5e5; }
 
-        .checkout-grid {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 80px;
+        .cart-item {
+            background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
         }
+        .remove-btn { color: var(--apple-red); cursor: pointer; font-size: 13px; font-weight: 600; margin-top: 5px; display: inline-block; }
 
-        .apple-input {
-            width: 100%;
-            border: 1px solid #d2d2d7;
-            padding: 20px;
-            border-radius: 14px;
-            font-size: 17px;
-            margin-bottom: 24px;
-            background: white;
-            box-sizing: border-box;
-            outline: none;
+        /* --- Checkout Modal --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 7000; display: none; align-items: center; justify-content: center;
         }
-        .apple-input:focus { border-color: var(--apple-blue); }
+        .modal-card {
+            background: #fff; color: #1d1d1f; width: 500px; padding: 40px;
+            border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .summary-card {
-            background: white;
-            padding: 40px;
-            border-radius: 28px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; color: #86868b; margin-bottom: 8px; uppercase; }
+        .modal-input {
+            width: 100%; padding: 14px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 16px; box-sizing: border-box;
         }
 
-        .close-icon { font-size: 20px; color: #86868b; cursor: pointer; transition: color 0.2s; }
-        .close-icon:hover { color: #1d1d1f; }
+        /* --- Success Animation --- */
+        .success-icon { font-size: 50px; color: var(--apple-green); margin-bottom: 20px; text-align: center; display: block; }
     </style>
 </head>
 <body>
 
     <nav>
         <div class="nav-content">
-            <div class="logo">
-                <i class="fa-solid fa-place-of-worship"></i>
-                GARDNER GROVE CEMETERY
-            </div>
-            <button class="cart-btn" onclick="openCheckout()">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <span id="cart-count" class="cart-badge">0</span>
+            <div class="logo"><i class="fa-solid fa-church"></i> GARDNER GROVE</div>
+            <button class="cart-trigger" onclick="toggleCart()">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span id="cartCount" class="cart-badge">0</span>
             </button>
         </div>
     </nav>
 
     <div class="main-container">
-        <div class="map-container" id="mapWrapper">
+        <div class="map-container">
             <img src="CemetryMap.jpg" class="cemetery-img">
-            
-            <svg class="overlay-svg" viewBox="0 0 1440 1080" xmlns="http://www.w3.org/2000/svg">
+            <svg class="overlay-svg" viewBox="0 0 1440 1080" xmlns="http://www.w3.org/2000/svg" id="mapSVG">
                 <g id="A11"><polygon class="plot-path" points="1157.83 66.09 1172.17 96.61 1193.83 96.61 1178.17 66.09 1157.83 66.09"/></g>
                 <g id="A12"><polygon class="plot-path" points="1133.3 66.09 1146.87 99.22 1166.96 99.22 1152.61 66.09 1133.3 66.09"/></g>
                 <g id="A13"><polygon class="plot-path" points="1104.35 67.65 1115.04 99.22 1137.48 99.22 1125.74 67.65 1104.35 67.65"/></g>
@@ -248,131 +205,264 @@
             <div id="infoCard" class="info-card">
                 <div class="card-header">
                     <h2 id="cardID">Plot</h2>
-                    <i class="fa-solid fa-circle-xmark close-icon" onclick="dismissCard()"></i>
+                    <i class="fa-solid fa-xmark" style="cursor:pointer; color:#86868b;" onclick="dismissCard()"></i>
                 </div>
-                <div class="card-body" id="cardBody">
-                    </div>
-                <div id="cardFooter"></div>
+                <div class="card-body" id="cardBody"></div>
             </div>
         </div>
     </div>
 
-    <div id="checkout">
-        <div class="checkout-grid">
-            <div>
-                <h1 style="font-size: 48px; font-weight: 600; margin-top:0; letter-spacing: -1.5px;">Checkout.</h1>
-                <h3 style="margin-top:48px; font-size: 24px; font-weight: 600;">Personal Information</h3>
-                <input class="apple-input" type="text" placeholder="First & Last Name">
-                <input class="apple-input" type="email" placeholder="Email Address">
-                
-                <h3 style="margin-top:40px; font-size: 24px; font-weight: 600;">Payment Information</h3>
-                <p style="color: #86868b; margin-top:-15px; margin-bottom: 20px;">Securely processed. Card in overcoat.</p>
-                <input class="apple-input" type="text" placeholder="Card Number">
-                <div style="display:flex; gap:20px;">
-                    <input class="apple-input" type="text" placeholder="MM/YY">
-                    <input class="apple-input" type="text" placeholder="CVV">
+    <div id="cartDrawer" class="cart-drawer">
+        <div class="drawer-header">
+            <h2 style="margin:0; font-size:22px;">Shopping Cart</h2>
+            <i class="fa-solid fa-xmark" style="cursor:pointer; font-size:20px;" onclick="toggleCart()"></i>
+        </div>
+        <div class="drawer-body" id="cartItems">
+            <div style="text-align:center; color:#86868b; margin-top:50px;">Your cart is empty.</div>
+        </div>
+        <div class="drawer-footer">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:600; font-size:18px;">
+                <span>Total</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            <button class="btn-action btn-add" onclick="openCheckout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="margin-top:0;">Secure Checkout</h2>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" class="modal-input" placeholder="John Doe" id="ckName">
+            </div>
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" class="modal-input" placeholder="john@example.com">
+            </div>
+            
+            <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+            
+            <h3 style="margin-bottom:10px;">Payment Method</h3>
+            <p style="font-size:14px; color:#666; margin-bottom:15px; background:#f5f5f7; padding:10px; border-radius:8px;">
+                <i class="fa-solid fa-circle-info"></i> Note: The card is in the overcoat.
+            </p>
+            <div class="input-group">
+                <label>Card Number</label>
+                <input type="text" class="modal-input" placeholder="0000 0000 0000 0000">
+            </div>
+            <div style="display:flex; gap:15px;">
+                <div class="input-group" style="flex:1;">
+                    <label>Expiry</label>
+                    <input type="text" class="modal-input" placeholder="MM/YY">
+                </div>
+                <div class="input-group" style="flex:1;">
+                    <label>CVC</label>
+                    <input type="text" class="modal-input" placeholder="123">
                 </div>
             </div>
-            <div>
-                <div class="summary-card">
-                    <h2 style="margin-top:0; font-size: 28px; font-weight: 600;">Bag Summary.</h2>
-                    <div id="summaryItems" style="margin-top:20px;"></div>
-                    <hr style="border: 0; border-top: 1px solid #f5f5f7; margin: 24px 0;">
-                    <div style="display:flex; justify-content:space-between; font-weight:600; font-size:22px; letter-spacing: -0.5px;">
-                        <span>Total</span>
-                        <span id="summaryTotal">$0.00</span>
-                    </div>
-                    <button class="btn-buy" style="width:100%; margin:40px 0 0;" onclick="alert('Transaction Verified.')">Confirm Order</button>
-                    <p style="text-align:center; font-size:14px; color: var(--apple-blue); font-weight: 500; margin-top: 24px; cursor:pointer;" onclick="closeCheckout()">Review Map</p>
-                </div>
+
+            <button class="btn-action btn-add" onclick="confirmOrder()">Pay & Place Order</button>
+            <button class="btn-action" style="background:none; color:#666; margin-top:0;" onclick="closeCheckout()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-card" style="text-align:center;">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h2 style="margin:0;">Order Confirmed!</h2>
+            <p style="color:#666; margin-top:10px;">Thank you for your purchase.</p>
+            
+            <div style="background:#f5f5f7; padding:20px; border-radius:12px; margin:20px 0; text-align:left;">
+                <div style="font-size:12px; color:#86868b; text-transform:uppercase; font-weight:700;">Order #88392</div>
+                <div id="receiptItems" style="margin-top:10px; font-weight:500;"></div>
             </div>
+
+            <button class="btn-action btn-add" onclick="closeSuccess()">Return to Map</button>
         </div>
     </div>
 
     <script>
+        // --- DATA STATE ---
         const plotData = {
-            "A11": { status: "Available", price: 1200, notes: "Row 1, Grave 1. High ground visibility." },
+            "A11": { status: "Available", price: 1200, row: "1", grave: "1", notes: "Premium Visibility." },
             "A12": { status: "Taken", name: "Leroy McGee", life: "1947 — 1995", notes: "White Marble Military Headstone" },
-            "A13": { status: "Taken", name: "Mrs. Bessie M. Williams", life: "1914 — 2004", notes: "Gray Headstone Flowers & Hands" },
-            "A14": { status: "Taken", name: "Gelester Williams", life: "1925 — 1968", notes: "White Marble Military Flat Marker" },
-            "A15": { status: "Available", price: 1200, notes: "Row 1, Grave 5. Reserved for Archive." }
+            "A13": { status: "Taken", name: "Mrs. Bessie M. Williams", life: "1914 — 2004", notes: "Gray Headstone" },
+            "A14": { status: "Taken", name: "Gelester Williams", life: "1925 — 1968", notes: "Military Flat Marker" },
+            "A15": { status: "Available", price: 1200, row: "1", grave: "5", notes: "Archive Section." }
         };
 
-        let cart = [];
-        let isLocked = false;
-        const card = document.getElementById('infoCard');
+        let cart = []; // Array of IDs
+        let isCardLocked = false;
+        
+        // --- INITIALIZATION ---
+        function initMap() {
+            document.querySelectorAll('g[id]').forEach(plot => {
+                const id = plot.id;
+                renderPlotStyle(id); // Apply initial color
+                
+                // Hover Event
+                plot.addEventListener('mouseenter', () => {
+                    if (!isCardLocked) showInfoCard(id);
+                });
 
-        document.querySelectorAll('g[id]').forEach(plot => {
-            const id = plot.id;
+                // Click Event
+                plot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    isCardLocked = true;
+                    showInfoCard(id);
+                    document.getElementById('infoCard').classList.add('locked');
+                });
+            });
+        }
+        
+        // Helper to color plots based on status
+        function renderPlotStyle(id) {
+            const plot = document.getElementById(id);
             const data = plotData[id];
+            plot.classList.remove('status-available', 'status-taken');
             
-            plot.classList.add(data.status === "Available" ? "status-available" : "status-taken");
-
-            plot.addEventListener('mouseenter', () => {
-                if (!isLocked) showData(id);
-            });
-
-            plot.addEventListener('click', (e) => {
-                e.stopPropagation();
-                isLocked = true;
-                showData(id);
-                card.classList.add('locked');
-            });
-        });
-
-        // Global click to dismiss
-        document.body.addEventListener('click', () => dismissCard());
-
-        function dismissCard() {
-            isLocked = false;
-            card.classList.remove('visible', 'locked');
+            if (data.status === "Available") {
+                plot.classList.add('status-available');
+            } else {
+                plot.classList.add('status-taken');
+            }
         }
 
-        function showData(id) {
+        // --- POPUP CARD ---
+        function showInfoCard(id) {
             const data = plotData[id];
+            const card = document.getElementById('infoCard');
             document.getElementById('cardID').innerText = "Plot " + id;
             
             let html = `
                 <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:${data.status === 'Available' ? 'var(--apple-green)' : 'var(--apple-red)'}">${data.status}</span></div>
-                ${data.name ? `<div class="info-row"><span class="info-label">Occupant</span><span class="info-value">${data.name}</span></div>` : ''}
-                ${data.life ? `<div class="info-row"><span class="info-label">Archive Dates</span><span class="info-value">${data.life}</span></div>` : ''}
-                ${data.notes ? `<div class="info-row"><span class="info-label">Site Notes</span><span class="info-value">${data.notes}</span></div>` : ''}
             `;
             
-            document.getElementById('cardBody').innerHTML = html;
+            if (data.name) html += `<div class="info-row"><span class="info-label">Occupant</span><span class="info-value">${data.name}</span></div>`;
+            if (data.life) html += `<div class="info-row"><span class="info-label">Dates</span><span class="info-value">${data.life}</span></div>`;
+            if (data.row) html += `<div class="info-row"><span class="info-label">Location</span><span class="info-value">Row ${data.row}, Grave ${data.grave}</span></div>`;
+
+            let footerHtml = '';
             
             if (data.status === "Available") {
-                document.getElementById('cardFooter').innerHTML = `<button class="btn-buy" onclick="addToCart('${id}')">Add to Bag • $${data.price}</button>`;
+                // Check if already in cart
+                if (cart.includes(id)) {
+                    footerHtml = `<button class="btn-action" style="background:#eee; color:#333; cursor:default;">In Cart</button>`;
+                } else {
+                    footerHtml = `<button class="btn-action btn-add" onclick="addToCart('${id}')">Add to Cart • $${data.price.toLocaleString()}</button>`;
+                }
             } else {
-                document.getElementById('cardFooter').innerHTML = '';
+                footerHtml = `<div style="text-align:center; padding:20px; color:#86868b; font-size:14px;">This plot is currently reserved.</div>`;
             }
 
+            document.getElementById('cardBody').innerHTML = html + footerHtml;
             card.classList.add('visible');
         }
 
+        function dismissCard() {
+            isCardLocked = false;
+            document.getElementById('infoCard').classList.remove('visible', 'locked');
+        }
+
+        document.body.addEventListener('click', () => dismissCard());
+
+        // --- CART LOGIC ---
         function addToCart(id) {
             if (!cart.includes(id)) {
                 cart.push(id);
-                document.getElementById('cart-count').innerText = cart.length;
+                updateCartUI();
                 dismissCard();
+                toggleCart(); // Auto open cart
             }
         }
 
+        function removeFromCart(id) {
+            cart = cart.filter(item => item !== id);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            // Update Badge
+            document.getElementById('cartCount').innerText = cart.length;
+
+            // Render Items
+            const container = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#86868b; margin-top:50px;">Your cart is empty.</div>`;
+                document.getElementById('cartTotal').innerText = "$0.00";
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+
+            cart.forEach(id => {
+                const data = plotData[id];
+                total += data.price;
+                html += `
+                    <div class="cart-item">
+                        <div>
+                            <div style="font-weight:600; font-size:16px;">Plot ${id}</div>
+                            <div style="font-size:13px; color:#666;">Row ${data.row}, Grave ${data.grave}</div>
+                            <div class="remove-btn" onclick="removeFromCart('${id}')">Remove</div>
+                        </div>
+                        <div style="font-weight:600;">$${data.price.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('cartTotal').innerText = "$" + total.toLocaleString() + ".00";
+        }
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('open');
+        }
+
+        // --- CHECKOUT LOGIC ---
         function openCheckout() {
-            if (cart.length === 0) return alert("Your bag is empty.");
-            document.getElementById('checkout').style.display = 'block';
-            const list = document.getElementById('summaryItems');
-            list.innerHTML = cart.map(id => `
-                <div style="display:flex; justify-content:space-between; margin-bottom:18px; font-size:18px; font-weight:500;">
-                    <span>Plot ${id}</span>
-                    <span>$1,200.00</span>
-                </div>`).join('');
-            document.getElementById('summaryTotal').innerText = "$" + (cart.length * 1200).toLocaleString() + ".00";
+            if (cart.length === 0) return alert("Cart is empty");
+            toggleCart(); // Close drawer
+            document.getElementById('checkoutModal').style.display = 'flex';
         }
 
         function closeCheckout() {
-            document.getElementById('checkout').style.display = 'none';
+            document.getElementById('checkoutModal').style.display = 'none';
         }
+
+        function confirmOrder() {
+            const name = document.getElementById('ckName').value || "Valued Customer";
+            
+            // 1. Process "Backend" Data Changes
+            cart.forEach(id => {
+                plotData[id].status = "Taken"; // Change status
+                plotData[id].name = name;      // Assign owner
+                plotData[id].life = "Reserved " + new Date().getFullYear();
+                delete plotData[id].price;     // Remove price
+                
+                // Update Visuals on Map
+                renderPlotStyle(id);
+            });
+
+            // 2. Prepare Receipt
+            const receiptHtml = cart.map(id => `<div>Plot ${id} - Paid</div>`).join('');
+            document.getElementById('receiptItems').innerHTML = receiptHtml;
+
+            // 3. Clear Cart & Show Success
+            cart = [];
+            updateCartUI();
+            closeCheckout();
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeSuccess() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        // Start
+        initMap();
+
     </script>
 </body>
 </html>
